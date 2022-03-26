@@ -237,7 +237,11 @@ function f:ShowData()
 	for itemkey, itemvalue in pairs(itemTable) do
 		local itemName = scrollChild:CreateFontString(scrollChild, "ARTWORK", "GameFontNormal")
 		itemName:SetPoint("TOPLEFT", 20, -20-n*yOffset)
-		itemName:SetText(itemkey)
+		if (itemvalue.itemlvl>25) then
+			itemName:SetText(itemvalue.itemlink.." ("..itemvalue.itemlvl..")")
+		else
+			itemName:SetText(itemvalue.itemlink)
+		end
 		n = n + 1
 	end
 end
@@ -246,12 +250,14 @@ function GetDistinctItems()
 	local t = {}
 	for datekey, datevalue in pairs(CraftLog) do
 		for itemkey, itemvalue in pairs(datevalue) do
-			if (t[itemkey] == nil) then t[itemkey] = {} end
+			--if (t[itemkey] == nil) then t[itemkey] = {} end
 			for ilvlkey, ilvlvalue in pairs(itemvalue) do
-				if(t[itemkey][ilvlkey] == nil) then t[itemkey][ilvlkey] = ilvlvalue end
+				--if(t[itemkey][ilvlkey] == nil) then t[itemkey][ilvlkey] = ilvlvalue end
+				table.insert(t, {itemlink=itemkey, itemlvl=ilvlkey})
 			end
 		end
 	end
+	table.sort(t, function(a,b) return a.itemlink<b.itemlink end)
 	return t
 end
 
