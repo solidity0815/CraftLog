@@ -36,7 +36,7 @@ local optionalReagentsInventory = {
 
 -- mass prospecting craft IDs for special handling and temp storage for product inventory
 local prospectingSpellIDs = {
-	[359492] = true,	-- Progenium
+	[359492] = true, -- Progenium
 	[311953] = true, -- Elethium
 	[311948] = true, -- Laestrite
 	[311950] = true, -- Oxxein
@@ -51,7 +51,10 @@ local prospectingInventory = {
 	[173172] = 0,	-- Essence of Servitude
 	[173173] = 0,	-- Essence of Valor
 	[173171] = 0,	-- Essence of Torment
-	[173170] = 0	-- Essence of Rebirth
+	[173170] = 0,	-- Essence of Rebirth
+	[175788] = 0,	-- Tranquil Pigment
+	[173057] = 0,	-- Luminous Pigment
+	[173056] = 0	-- Umbral Pigment
 }
 
 
