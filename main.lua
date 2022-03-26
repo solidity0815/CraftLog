@@ -1,8 +1,15 @@
---create frame
+-- create local variables
 
+-- frame to register events
 local f = CreateFrame("Frame")
-local castGUID
+
+-- temp storage for current castGUID
+local castGUID, delayedSpell, delayedTimestamp
+
+-- toggle for debug log
 local debugToggle = false
+
+-- optional reagents ilvl effect and temp storage for current inventory
 local optionalReagentsIlvl = {
 	[185960] = { [190] = 225, [210] = 235, [225] = 249, [235] = 262 },  --VoO    ->  +2
 	[187784] = { [190] = 235, [210] = 249, [225] = 262, [235] = 291 },  --VotE   ->  +3
@@ -26,15 +33,7 @@ local optionalReagentsInventory = {
 	[187742] = 0  --CMotFO -> 262
 }
 
-local prospectingInventory = {
-	[173110] = 0,	-- Umbryl
-	[173108] = 0,	-- Oriblase
-	[173109] = 0,	-- Angerseye
-	[173172] = 0,	-- Essence of Servitude
-	[173173] = 0,	-- Essence of Valor
-	[173171] = 0,	-- Essence of Torment
-	[173170] = 0	-- Essence of Rebirth
-}
+-- mass prospecting craft IDs for special handling and temp storage for product inventory
 local prospectingSpellIDs = {
 	[359492] = true,	-- Progenium
 	[311953] = true, -- Elethium
@@ -44,10 +43,18 @@ local prospectingSpellIDs = {
 	[311952] = true, -- Sinvyr
 	[311949] = true  -- Solenium
 }
+local prospectingInventory = {
+	[173110] = 0,	-- Umbryl
+	[173108] = 0,	-- Oriblase
+	[173109] = 0,	-- Angerseye
+	[173172] = 0,	-- Essence of Servitude
+	[173173] = 0,	-- Essence of Valor
+	[173171] = 0,	-- Essence of Torment
+	[173170] = 0	-- Essence of Rebirth
+}
 
-local delayedSpell, delayedTimestamp
 
---structure of CraftLog table
+-- structure of CraftLog table
 --CraftLog {
 --	[date] = {
 --		[itemlink] = {
@@ -59,14 +66,13 @@ local delayedSpell, delayedTimestamp
 --	}
 --}
 
---register events
+-- register events
 f:RegisterEvent("UNIT_SPELLCAST_START")
 f:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 f:RegisterEvent("BAG_UPDATE_DELAYED")
 f:RegisterEvent("ADDON_LOADED")
 
---handle slash commands
-
+-- slash command handler
 function SlashCraftLog(arg1)
 	if (arg1 == "") then
 		print("use /craftlog debug to toggle debug mode")
@@ -81,7 +87,7 @@ function SlashCraftLog(arg1)
 	end
 end
 
---handle events
+-- event handler base
 f:SetScript("OnEvent", function(self, event, ...)
 	if (event == "UNIT_SPELLCAST_START") then
 		OnUnitSpellcastStart(event, ...)
@@ -94,6 +100,7 @@ f:SetScript("OnEvent", function(self, event, ...)
 	end
 end)
 
+-- event handler ADDON_LOADED
 function InitializeSavedVariables(...)
 	local arg1 = ...
 	if (arg1 == "CraftLog") then
@@ -103,6 +110,7 @@ function InitializeSavedVariables(...)
 	end
 end
 
+-- event handler UNIT_SPELLCAST_START
 function OnUnitSpellcastStart(event, ...)
 	local unit, cast, spell = ...
 	
@@ -135,6 +143,7 @@ function OnUnitSpellcastStart(event, ...)
 	end
 end
 
+-- event handler UNIT_SPELLCAST_SUCCEEDED
 function OnUnitSpellcastSucceeded(event, ...)
 	local unit, cast, spell = ...
 	local timestamp = date('%Y-%m-%d')
@@ -149,25 +158,9 @@ function OnUnitSpellcastSucceeded(event, ...)
 		delayedSpell = nil
 		delayedTimestamp = nil
 	end
-
 end
 
-function addItemToCraftLog(timestamp, link, ilvl, dir, amount)
-	--first craft for the day
-	if (CraftLog[timestamp] == nil) then CraftLog[timestamp] = {} end
-	--first craft of the day using/producing optional reagent
-	if (CraftLog[timestamp][link] == nil) then CraftLog[timestamp][link] = {} end
-	--first craft of the day using/producing optional reagent @ ilvl
-	if (CraftLog[timestamp][link][ilvl] == nil) then CraftLog[timestamp][link][ilvl] = {} end
-	--first craft of the day using optional reagent
-	if (CraftLog[timestamp][link][ilvl][dir] == nil) then
-		CraftLog[timestamp][link][ilvl][dir] = amount
-	else
-		CraftLog[timestamp][link][ilvl][dir] = CraftLog[timestamp][link][ilvl][dir] + amount
-	end
-	if (debugToggle) then print(timestamp.." "..dir.." "..amount.." "..link) end
-end
-
+-- event handler BAG_UPDATE_DELAYED
 function OnBagUpdateDelayed(event, ...)
 	if (debugToggle) then print(event) end
 	if not (delayedSpell == nil) and not (delayedTimestamp == nil) then
@@ -252,27 +245,26 @@ function OnBagUpdateDelayed(event, ...)
 	end
 end
 
---register slash commands
+-- utility functions
+
+-- adds item to the CraftLog table
+function addItemToCraftLog(timestamp, link, ilvl, dir, amount)
+	--first craft for the day
+	if (CraftLog[timestamp] == nil) then CraftLog[timestamp] = {} end
+	--first craft of the day using/producing optional reagent
+	if (CraftLog[timestamp][link] == nil) then CraftLog[timestamp][link] = {} end
+	--first craft of the day using/producing optional reagent @ ilvl
+	if (CraftLog[timestamp][link][ilvl] == nil) then CraftLog[timestamp][link][ilvl] = {} end
+	--first craft of the day using optional reagent
+	if (CraftLog[timestamp][link][ilvl][dir] == nil) then
+		CraftLog[timestamp][link][ilvl][dir] = amount
+	else
+		CraftLog[timestamp][link][ilvl][dir] = CraftLog[timestamp][link][ilvl][dir] + amount
+	end
+	if (debugToggle) then print(timestamp.." "..dir.." "..amount.." "..link) end
+end
+
+-- register slash commands
 SLASH_CRAFTLOG1 = "/cl"
 SLASH_CRAFTLOG2 = "/craftlog"
-
 SlashCmdList["CRAFTLOG"] = SlashCraftLog
-
-
---on UNIT_SPELLCAST_START
---	snapshot inventory
-
---on UNIT_SPELLCAST_SUCCEEDED
---	if player
---		spellid = arg3
---		itemproduced = C_TradeSkillUI.GetRecipeItemLink( spellid )
---		if C_TradeSkillUI.GetOptionalReagentInfo( spellid ) > 0
---			diff snapshot and current inventory to determine optional reagent used and resulting ilvl
---		numitemproduced = C_TradeSkillUI.GetRecipeNumItemsProduced( spellid )
---		for each C_TradeSkillUI.GetRecipeNumReagents( spellid )
---			itemused = C_TradeSkillUI.GetRecipeReagentItemLink( spellid, reagentindex )
---			_, _, _, numitemused, _ = C_TradeSkillUI.GetRecipeReagentInfo( spellid, reagentIndex )
-
---cloth hands 291 = 338998
---cloth hands 249 = 332068
---r1-4 have different spellids, effective ilvl/optional reagent via inventory diff between start/success of craft
