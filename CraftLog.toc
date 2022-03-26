@@ -1,0 +1,7 @@
+## Interface: 90002
+## Title: Craft Logger
+## Author: Pantalaîmon / EU-Blackhand
+## Version: 0.1
+## SavedVariables: CraftLog
+
+main.lua
