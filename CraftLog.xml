@@ -1,5 +1,5 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
-	<Editbox name="RecipeExporter">
+	<Editbox name="Craft Log">
 		<Size>
 			<AbsDimension x="400" y="600" />
 		</Size>
@@ -7,6 +7,9 @@
 			<Anchor point="CENTER" />
 		</Anchors>
 		<Scripts>
+      <OnShow>
+        message("Hello!");
+      </OnShow>
 		</Scripts>
 	</Editbox>
 </Ui>
