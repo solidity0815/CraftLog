@@ -236,6 +236,58 @@ function OnBagUpdateDelayed(...)
 	end
 end
 
+-- return distinct items from CRAFTLOG
+function GetItemStats()
+	local t = {}
+	-- structure of t {}
+	-- t {
+	--	{ itemlink=link, ilvl=ilvl, used={7day=7day, 14day=14day, 30day=30day, total=total}, crafted={7day=7day, 14day=14day, 30day=30day, total=total}},
+	--	{ ... }
+	--}
+	for kDay, vDay in pairs(CraftLog) do
+		local year, month, day = kDay:match("(%d+)-(%d+)-(%d+)")
+		local age = floor((time() - time({day=day, month=month, year=year}))/86400)
+		for kCraft, vCraft in pairs(vDay) do
+			for kLink, vLink in pairs(vCraft) do
+				if (t[kLink] == nil) then t[kLink] = {} end
+				for kIlvl, vIlvl in pairs(vLink) do
+					if (t[kLink][kIlvl] == nil) then t[kLink][kIlvl] = {} end
+					for kDir, vDir in pairs(vIlvl) do
+						if (t[kLink][kIlvl][kDir] == nil) then t[kLink][kIlvl][kDir] = {} end
+						if (age<=7) then
+							if (t[kLink][kIlvl][kDir][7day] == nil) then
+								t[kLink][kIlvl][kDir][7day] = vDir
+							else
+								t[kLink][kIlvl][kDir][7day] = t[kLink][kIlvl][kDir][7day] + vDir
+							end
+						end
+						if (age<=14) then
+							if (t[kLink][kIlvl][kDir][14day] == nil) then
+								t[kLink][kIlvl][kDir][14day] = vDir
+							else
+								t[kLink][kIlvl][kDir][14day] = t[kLink][kIlvl][kDir][14day] + vDir
+							end
+						end
+						if (age<=30) then
+							if (t[kLink][kIlvl][kDir][30day] == nil) then
+								t[kLink][kIlvl][kDir][30day] = vDir
+							else
+								t[kLink][kIlvl][kDir][30day] = t[kLink][kIlvl][kDir][30day] + vDir
+							end
+						end
+						if (t[kLink][kIlvl][kDir][total] == nil) then
+							t[kLink][kIlvl][kDir][total] = vDir
+						else
+							t[kLink][kIlvl][kDir][total] = t[kLink][kIlvl][kDir][total] + vDir
+						end
+					end
+				end
+			end
+		end
+	end
+	return t
+end
+
 -- adds item to the CraftLog table
 function addItemToCraftLog(timestamp, spell, link, ilvl, dir, amount)
 	-- structure of CraftLog table
