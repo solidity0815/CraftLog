@@ -1,5 +1,6 @@
 ﻿-- get reference to main frame
 local f = CraftLogFrame
+local sc = scScroll
 
 -- settings
 local debugToggle = false
@@ -242,7 +243,7 @@ function GetItemStats()
 	local t = {}	-- temp table
 	local r = {}	-- return table
 	-- structure of r {}
-	-- t {
+	-- r {
 	--	{ itemlink=link, ilvl=ilvl, used7day=7day, used14day=14day, used30day=30day, usedtotal=total, crafted7day=7day, crafted14day=14day, crafted30day=30day, craftedtotal=total},
 	--	{ ... }
 	--}
@@ -316,10 +317,10 @@ function GetItemStats()
 				if (t[kLink][kIlvl]["-"]["30day"] == nil) then used30day = 0 else used30day = t[kLink][kIlvl]["-"]["30day"] end
 				if (t[kLink][kIlvl]["-"]["total"] == nil) then usedtotal = 0 else usedtotal = t[kLink][kIlvl]["-"]["total"] end
 			end
-			table.insert(r, {itemLink=kLink, ilvl=kIlvl, used7day=used7day, used14day=used14day, used30day=used30day, crafted7day=crafted7day, crafted14day=crafted14day, crafted30day=crafted30day, craftedtotal=craftedtotal})			
+			table.insert(r, {itemlink=kLink, ilvl=kIlvl, used7day=used7day, used14day=used14day, used30day=used30day, crafted7day=crafted7day, crafted14day=crafted14day, crafted30day=crafted30day, craftedtotal=craftedtotal})			
 		end
 	end
-	table.sort(r, function(a,b) return a.itemLink<b.itemLink end)
+	table.sort(r, function(a,b) return a.itemlink<b.itemlink end)
 	return r
 end
 
@@ -424,6 +425,43 @@ function InitializeSavedVariables(...)
 	end
 end
 
+function f:ShowData()
+	-- headers for Timeframes
+	local header1d = f:CreateFontString(f, "ARTWORK", "GameFontHighlight")
+	header1d:SetPoint("TOPLEFT", 350, -40)
+	header1d:SetText("7 days")
+
+	local header7d = f:CreateFontString(f, "ARTWORK", "GameFontHighlight")
+	header7d:SetPoint("TOPLEFT", 450, -40)
+	header7d:SetText("14 days")
+
+	local header30d = f:CreateFontString(f, "ARTWORK", "GameFontHighlight")
+	header30d:SetPoint("TOPLEFT", 550, -40)
+	header30d:SetText("30 days")
+
+	local headerAll = f:CreateFontString(f, "ARTWORK", "GameFontHighlight")
+	headerAll:SetPoint("TOPLEFT", 650, -40)
+	headerAll:SetText("total")
+
+	--add data
+		--	{ itemlink=link, ilvl=ilvl, used7day=7day, used14day=14day, used30day=30day, usedtotal=total, crafted7day=7day, crafted14day=14day, crafted30day=30day, craftedtotal=total},
+	for i, v in ipairs(GetItemStats()) do
+		local itemText = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlight")
+		itemText:SetPoint("TOPLEFT", 20, -i*50)
+		itemText:SetText(v.itemlink.." ("..v.ilvl..")")
+		local used7day = sc:CreateFontString(sc, "ARTWORK", "GameFontNormal")
+		used7day:SetPoint("TOPLEFT", 200, -i*50+10)
+		used7day:SetText("- "..v.used7day)
+		local crafted7day = sc:CreateFontString(sc, "ARTWORK", "GameFontNormal")
+		crafted7day:SetPoint("TOPLEFT", 200, -i*50-10)
+		crafted7day:SetText("+ "..v.crafted7day)
+	end
+	--local temptext = sc:CreateFontString(sc, "ARTWORK", "GameFontNormal")
+	--temptext:SetPoint("TOPLEFT", 20, -1000)
+	--temptext:SetText("testText")
+	--end
+end
+
 -- slash command handler
 function SlashCraftLog(arg1)
 	if (arg1 == "help") or (arg1 == "?") then
@@ -442,7 +480,7 @@ function SlashCraftLog(arg1)
 	elseif (arg1 == "") then
 		if (debugToggle) then print("CraftLog: showing Frame") end
 		f:Show()
-		--f:ShowData()
+		f:ShowData()
 	end
 end
 
