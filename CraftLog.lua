@@ -255,30 +255,30 @@ function GetItemStats()
 					for kDir, vDir in pairs(vIlvl) do
 						if (t[kLink][kIlvl][kDir] == nil) then t[kLink][kIlvl][kDir] = {} end
 						if (age<=7) then
-							if (t[kLink][kIlvl][kDir][7day] == nil) then
-								t[kLink][kIlvl][kDir][7day] = vDir
+							if (t[kLink][kIlvl][kDir]["7day"] == nil) then
+								t[kLink][kIlvl][kDir]["7day"] = vDir
 							else
-								t[kLink][kIlvl][kDir][7day] = t[kLink][kIlvl][kDir][7day] + vDir
+								t[kLink][kIlvl][kDir]["7day"] = t[kLink][kIlvl][kDir]["7day"] + vDir
 							end
 						end
 						if (age<=14) then
-							if (t[kLink][kIlvl][kDir][14day] == nil) then
-								t[kLink][kIlvl][kDir][14day] = vDir
+							if (t[kLink][kIlvl][kDir]["14day"] == nil) then
+								t[kLink][kIlvl][kDir]["14day"] = vDir
 							else
-								t[kLink][kIlvl][kDir][14day] = t[kLink][kIlvl][kDir][14day] + vDir
+								t[kLink][kIlvl][kDir]["14day"] = t[kLink][kIlvl][kDir]["14day"] + vDir
 							end
 						end
 						if (age<=30) then
-							if (t[kLink][kIlvl][kDir][30day] == nil) then
-								t[kLink][kIlvl][kDir][30day] = vDir
+							if (t[kLink][kIlvl][kDir]["30day"] == nil) then
+								t[kLink][kIlvl][kDir]["30day"] = vDir
 							else
-								t[kLink][kIlvl][kDir][30day] = t[kLink][kIlvl][kDir][30day] + vDir
+								t[kLink][kIlvl][kDir]["30day"] = t[kLink][kIlvl][kDir]["30day"] + vDir
 							end
 						end
-						if (t[kLink][kIlvl][kDir][total] == nil) then
-							t[kLink][kIlvl][kDir][total] = vDir
+						if (t[kLink][kIlvl][kDir]["total"] == nil) then
+							t[kLink][kIlvl][kDir]["total"] = vDir
 						else
-							t[kLink][kIlvl][kDir][total] = t[kLink][kIlvl][kDir][total] + vDir
+							t[kLink][kIlvl][kDir]["total"] = t[kLink][kIlvl][kDir]["total"] + vDir
 						end
 					end
 				end
