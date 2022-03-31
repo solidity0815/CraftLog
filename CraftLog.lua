@@ -236,14 +236,18 @@ function OnBagUpdateDelayed(...)
 	end
 end
 
--- return distinct items from CRAFTLOG
+-- return distinct items from CRAFTLOG including usage/crafted amounts over various periods
 function GetItemStats()
-	local t = {}
-	-- structure of t {}
+	-- TODO: cleanup itemLinks so that crafting profession, character etc do not matter
+	local t = {}	-- temp table
+	local r = {}	-- return table
+	-- structure of r {}
 	-- t {
-	--	{ itemlink=link, ilvl=ilvl, used={7day=7day, 14day=14day, 30day=30day, total=total}, crafted={7day=7day, 14day=14day, 30day=30day, total=total}},
+	--	{ itemlink=link, ilvl=ilvl, used7day=7day, used14day=14day, used30day=30day, usedtotal=total, crafted7day=7day, crafted14day=14day, crafted30day=30day, craftedtotal=total},
 	--	{ ... }
 	--}
+
+	-- sum up crafted/used amounts per item/ilvl over 7/14/30day/total time
 	for kDay, vDay in pairs(CraftLog) do
 		local year, month, day = kDay:match("(%d+)-(%d+)-(%d+)")
 		local age = floor((time() - time({day=day, month=month, year=year}))/86400)
@@ -285,7 +289,38 @@ function GetItemStats()
 			end
 		end
 	end
-	return t
+	
+	-- flatten table before returning it
+	for kLink, vLink in pairs(t) do
+		for kIlvl, vIlvl in pairs(t[kLink]) do
+			local crafted7day, crafted14day, crafted30dy, craftedtotal, used7day, used14day, used30day, usedtotal
+			if (t[kLink][kIlvl]["+"] == nil) then
+				crafted7day = 0
+				crafted14day = 0
+				crafted30day = 0
+				craftedtotal = 0
+			else
+				if (t[kLink][kIlvl]["+"]["7day"] == nil) then crafted7day = 0 else crafted7day = t[kLink][kIlvl]["+"]["7day"] end
+				if (t[kLink][kIlvl]["+"]["14day"] == nil) then crafted14day = 0 else crafted14day = t[kLink][kIlvl]["+"]["14day"] end
+				if (t[kLink][kIlvl]["+"]["30day"] == nil) then crafted30day = 0 else crafted30day = t[kLink][kIlvl]["+"]["30day"] end
+				if (t[kLink][kIlvl]["+"]["total"] == nil) then craftedtotal = 0 else craftedtotal = t[kLink][kIlvl]["+"]["total"] end
+			end
+			if (t[kLink][kIlvl]["-"] == nil) then
+				used7day = 0
+				used14day = 0
+				used30day = 0
+				usedtotal = 0
+			else
+				if (t[kLink][kIlvl]["-"]["7day"] == nil) then used7day = 0 else used7day = t[kLink][kIlvl]["-"]["7day"] end
+				if (t[kLink][kIlvl]["-"]["14day"] == nil) then used14day = 0 else used14day = t[kLink][kIlvl]["-"]["14day"] end
+				if (t[kLink][kIlvl]["-"]["30day"] == nil) then used30day = 0 else used30day = t[kLink][kIlvl]["-"]["30day"] end
+				if (t[kLink][kIlvl]["-"]["total"] == nil) then usedtotal = 0 else usedtotal = t[kLink][kIlvl]["-"]["total"] end
+			end
+			table.insert(r, {itemLink=kLink, ilvl=kIlvl, used7day=used7day, used14day=used14day, used30day=used30day, crafted7day=crafted7day, crafted14day=crafted14day, crafted30day=crafted30day, craftedtotal=craftedtotal})			
+		end
+	end
+	table.sort(r, function(a,b) return a.itemLink<b.itemLink end)
+	return r
 end
 
 -- adds item to the CraftLog table
