@@ -34,6 +34,11 @@ local prospectingInventory = {
 	--[173056] = 0	-- Umbral Pigment
 }
 
+-- bonusIDs for itemLink cleanup
+local bonusIDs = {
+		[]
+	}
+
 -- optional reagents with ilvl effect and temp storage for current inventory
 local optionalReagentsIlvl = {
 	[185960] = { [190] = 225, [210] = 235, [225] = 249, [235] = 262 },  --VoO    ->  +2
@@ -317,7 +322,7 @@ function GetItemStats()
 				if (t[kLink][kIlvl]["-"]["30day"] == nil) then used30day = 0 else used30day = t[kLink][kIlvl]["-"]["30day"] end
 				if (t[kLink][kIlvl]["-"]["total"] == nil) then usedtotal = 0 else usedtotal = t[kLink][kIlvl]["-"]["total"] end
 			end
-			table.insert(r, {itemlink=kLink, ilvl=kIlvl, used7day=used7day, used14day=used14day, used30day=used30day, crafted7day=crafted7day, crafted14day=crafted14day, crafted30day=crafted30day, craftedtotal=craftedtotal})			
+			table.insert(r, {itemlink=kLink, ilvl=kIlvl, used7day=used7day, used14day=used14day, used30day=used30day, usedtotal=usedtotal, crafted7day=crafted7day, crafted14day=crafted14day, crafted30day=crafted30day, craftedtotal=craftedtotal})			
 		end
 	end
 	table.sort(r, function(a,b) return a.itemlink<b.itemlink end)
@@ -425,6 +430,11 @@ function InitializeSavedVariables(...)
 	end
 end
 
+-- clean itemlinks to remove extraeneous info like crafter's level and spec
+function CleanItemlink(itemLink, ilvl)
+	
+end
+
 function f:ShowData()
 	-- headers for Timeframes
 	local header1d = f:CreateFontString(f, "ARTWORK", "GameFontHighlight")
@@ -446,15 +456,37 @@ function f:ShowData()
 	--add data
 		--	{ itemlink=link, ilvl=ilvl, used7day=7day, used14day=14day, used30day=30day, usedtotal=total, crafted7day=7day, crafted14day=14day, crafted30day=30day, craftedtotal=total},
 	for i, v in ipairs(GetItemStats()) do
+		-- 7 day timeframe
 		local itemText = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlight")
-		itemText:SetPoint("TOPLEFT", 20, -i*50)
 		itemText:SetText(v.itemlink.." ("..v.ilvl..")")
-		local used7day = sc:CreateFontString(sc, "ARTWORK", "GameFontNormal")
-		used7day:SetPoint("TOPLEFT", 200, -i*50+10)
+		itemText:SetPoint("TOPLEFT", 20, -i*50)
+		local used7day = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
 		used7day:SetText("- "..v.used7day)
-		local crafted7day = sc:CreateFontString(sc, "ARTWORK", "GameFontNormal")
-		crafted7day:SetPoint("TOPLEFT", 200, -i*50-10)
+		used7day:SetPoint("TOPLEFT", 250-used7day:GetStringWidth(), -i*50+10)
+		local crafted7day = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
 		crafted7day:SetText("+ "..v.crafted7day)
+		crafted7day:SetPoint("TOPLEFT", 250-crafted7day:GetStringWidth(), -i*50-10)
+		-- 14 day timeframe
+		local used14day = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
+		used14day:SetText("- "..v.used14day)
+		used14day:SetPoint("TOPLEFT", 350-used14day:GetStringWidth(), -i*50+10)
+		local crafted14day = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
+		crafted14day:SetText("+ "..v.crafted14day)
+		crafted14day:SetPoint("TOPLEFT", 350-crafted14day:GetStringWidth(), -i*50-10)
+		-- 30 day timeframe
+		local used30day = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
+		used30day:SetText("- "..v.used30day)
+		used30day:SetPoint("TOPLEFT", 450-used30day:GetStringWidth(), -i*50+10)
+		local crafted30day = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
+		crafted30day:SetText("+ "..v.crafted30day)
+		crafted30day:SetPoint("TOPLEFT", 450-crafted30day:GetStringWidth(), -i*50-10)
+		-- total timeframe
+		local usedtotal = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
+		usedtotal:SetText("- "..v.usedtotal)
+		usedtotal:SetPoint("TOPLEFT", 550-usedtotal:GetStringWidth(), -i*50+10)
+		local craftedtotal = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
+		craftedtotal:SetText("+ "..v.craftedtotal)
+		craftedtotal:SetPoint("TOPLEFT", 550-craftedtotal:GetStringWidth(), -i*50-10)
 	end
 	--local temptext = sc:CreateFontString(sc, "ARTWORK", "GameFontNormal")
 	--temptext:SetPoint("TOPLEFT", 20, -1000)
