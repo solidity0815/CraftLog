@@ -349,34 +349,34 @@ function GetCleanItemLink(itemLink, ilvl)
 	end
 	
 	-- reassemble itemlink
-	if (splitLink[2] == "172231") then
-		for i, s in ipairs(splitLink) do
-			print(i.." : "..s)
-		end
-	end
-	if (splitLink[2] == "172231") then print(splitLink[14]) end
+	--if (splitLink[2] == "172231") then
+	--	for i, s in ipairs(splitLink) do
+	--		print(i.." : "..s)
+	--	end
+	--end
+	--if (splitLink[2] == "172231") then print(splitLink[14]) end
 	for i, s in ipairs(splitLink) do
-		if (splitLink[2] == "172231") then print(i) end
+		--if (splitLink[2] == "172231") then print(i) end
 		if (i==1) then
 			cleanLink = s
-			if (splitLink[2] == "172231") then print("A") end
+			--if (splitLink[2] == "172231") then print("A") end
 		elseif (i==14) and (stripBonus) then
 			cleanLink = cleanLink..":"
-			if (splitLink[2] == "172231") then print("B") end
+			--if (splitLink[2] == "172231") then print("B") end
 		elseif (i==15) and (stripBonus) and (splitLink[14]=="1") then
 			cleanLink = cleanLink
-			if (splitLink[2] == "172231") then print("C1") end
+			--if (splitLink[2] == "172231") then print("C1") end
 		elseif (i==15) and (stripBonus) and (splitLink[14]=="2") then
 			cleanLink = cleanLink
-			if (splitLink[2] == "172231") then print("C2") end
+			--if (splitLink[2] == "172231") then print("C2") end
 		elseif (i==16) and (stripBonus) and (splitLink[14]=="2") then
 			cleanLink = cleanLink
-			if (splitLink[2] == "172231") then print("D") end
+			--if (splitLink[2] == "172231") then print("D") end
 		else
 			cleanLink = cleanLink..":"..s
-			if (splitLink[2] == "172231") then print("E") end
+			--if (splitLink[2] == "172231") then print("E") end
 		end
-		if (splitLink[2] == "172231") then print(cleanLink) end
+		--if (splitLink[2] == "172231") then print(cleanLink) end
 	end
 	return cleanLink
 end
