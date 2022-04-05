@@ -390,7 +390,7 @@ function GetCleanItemLink(itemLink, ilvl)
 end
 
 -- return distinct items from CRAFTLOG including usage/crafted amounts over various periods
-function GetItemStats()
+function CraftLogGetItemStats()
 	-- TODO: cleanup itemLinks so that crafting profession, character etc do not matter
 	local t = {}	-- temp table
 	local r = {}	-- return table
@@ -609,7 +609,7 @@ function f:ShowData()
 
 	--add data
 	--	{ itemlink=link, ilvl=ilvl, used7day=7day, used14day=14day, used30day=30day, usedtotal=total, crafted7day=7day, crafted14day=14day, crafted30day=30day, craftedtotal=total},
-	for i, v in ipairs(GetItemStats()) do
+	for i, v in ipairs(CraftLogGetItemStats()) do
 		
 		local itemButton = CraftLogItemButtons[i] or CreateFrame("Button", nil, sc)
 		CraftLogItemButtons[i] = itemButton
