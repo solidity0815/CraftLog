@@ -453,42 +453,46 @@ function CraftLogGetItemStats()
 		for kIlvl, vIlvl in pairs(t[kLink]) do
 			local crafted7day, crafted14day, crafted30dy, craftedtotal, used7day, used14day, used30day, usedtotal
 			local itemName, _, _, _, _, _, _, _, _, _, _, itemTypeID, itemSubTypeID = GetItemInfo(kLink)
-			if not (showOldData) then 
-				if (r[itemTypeID]==nil) then r[itemTypeID] = {} end
-				if (r[itemTypeID][itemSubTypeID]==nil) then r[itemTypeID][itemSubTypeID] = {} end
-			end
-			if (t[kLink][kIlvl]["+"] == nil) then
-				crafted7day = 0
-				crafted14day = 0
-				crafted30day = 0
-				craftedtotal = 0
+			if (itemTypeID == nil or itemSubTypeID == nil) then
+				print(kLink.." not cached, skipping for now")
 			else
-				if (t[kLink][kIlvl]["+"]["7day"] == nil) then crafted7day = 0 else crafted7day = t[kLink][kIlvl]["+"]["7day"] end
-				if (t[kLink][kIlvl]["+"]["14day"] == nil) then crafted14day = 0 else crafted14day = t[kLink][kIlvl]["+"]["14day"] end
-				if (t[kLink][kIlvl]["+"]["30day"] == nil) then crafted30day = 0 else crafted30day = t[kLink][kIlvl]["+"]["30day"] end
-				if (t[kLink][kIlvl]["+"]["total"] == nil) then craftedtotal = 0 else craftedtotal = t[kLink][kIlvl]["+"]["total"] end
-			end
-			if (t[kLink][kIlvl]["-"] == nil) then
-				used7day = 0
-				used14day = 0
-				used30day = 0
-				usedtotal = 0
-			else
-				if (t[kLink][kIlvl]["-"]["7day"] == nil) then used7day = 0 else used7day = t[kLink][kIlvl]["-"]["7day"] end
-				if (t[kLink][kIlvl]["-"]["14day"] == nil) then used14day = 0 else used14day = t[kLink][kIlvl]["-"]["14day"] end
-				if (t[kLink][kIlvl]["-"]["30day"] == nil) then used30day = 0 else used30day = t[kLink][kIlvl]["-"]["30day"] end
-				if (t[kLink][kIlvl]["-"]["total"] == nil) then usedtotal = 0 else usedtotal = t[kLink][kIlvl]["-"]["total"] end
-			end
-			if (showOldData) then
-				table.insert(r, {itemlink=kLink, ilvl=kIlvl, used7day=used7day, used14day=used14day, used30day=used30day, usedtotal=usedtotal, crafted7day=crafted7day, crafted14day=crafted14day, crafted30day=crafted30day, craftedtotal=craftedtotal, itemTypeID=itemTypeID, itemSubTypeID=itemSubTypeID, itemName=itemName})
-				table.sort(r, function(a,b) return
-					a.itemTypeID<b.itemTypeID or
-					(a.itemTypeID==b.itemTypeID and a.itemSubTypeID<b.itemSubTypeID) or
-					(a.itemTypeID==b.itemTypeID and a.itemSubTypeID==b.itemSubTypeID and a.itemName<b.itemName) or
-					(a.itemTypeID==b.itemTypeID and a.itemSubTypeID==b.itemSubTypeID and a.itemName==b.itemName and a.ilvl<b.ilvl)
-				end)
-			else
-				table.insert(r[itemTypeID][itemSubTypeID], {itemlink=kLink, ilvl=kIlvl, used7day=used7day, used14day=used14day, used30day=used30day, usedtotal=usedtotal, crafted7day=crafted7day, crafted14day=crafted14day, crafted30day=crafted30day, craftedtotal=craftedtotal, itemTypeID=itemTypeID, itemSubTypeID=itemSubTypeID, itemName=itemName})
+				if not (showOldData) then 
+					if (r[itemTypeID]==nil) then r[itemTypeID] = {} end
+					if (r[itemTypeID][itemSubTypeID]==nil) then r[itemTypeID][itemSubTypeID] = {} end
+				end
+				if (t[kLink][kIlvl]["+"] == nil) then
+					crafted7day = 0
+					crafted14day = 0
+					crafted30day = 0
+					craftedtotal = 0
+				else
+					if (t[kLink][kIlvl]["+"]["7day"] == nil) then crafted7day = 0 else crafted7day = t[kLink][kIlvl]["+"]["7day"] end
+					if (t[kLink][kIlvl]["+"]["14day"] == nil) then crafted14day = 0 else crafted14day = t[kLink][kIlvl]["+"]["14day"] end
+					if (t[kLink][kIlvl]["+"]["30day"] == nil) then crafted30day = 0 else crafted30day = t[kLink][kIlvl]["+"]["30day"] end
+					if (t[kLink][kIlvl]["+"]["total"] == nil) then craftedtotal = 0 else craftedtotal = t[kLink][kIlvl]["+"]["total"] end
+				end
+				if (t[kLink][kIlvl]["-"] == nil) then
+					used7day = 0
+					used14day = 0
+					used30day = 0
+					usedtotal = 0
+				else
+					if (t[kLink][kIlvl]["-"]["7day"] == nil) then used7day = 0 else used7day = t[kLink][kIlvl]["-"]["7day"] end
+					if (t[kLink][kIlvl]["-"]["14day"] == nil) then used14day = 0 else used14day = t[kLink][kIlvl]["-"]["14day"] end
+					if (t[kLink][kIlvl]["-"]["30day"] == nil) then used30day = 0 else used30day = t[kLink][kIlvl]["-"]["30day"] end
+					if (t[kLink][kIlvl]["-"]["total"] == nil) then usedtotal = 0 else usedtotal = t[kLink][kIlvl]["-"]["total"] end
+				end
+				if (showOldData) then
+					table.insert(r, {itemlink=kLink, ilvl=kIlvl, used7day=used7day, used14day=used14day, used30day=used30day, usedtotal=usedtotal, crafted7day=crafted7day, crafted14day=crafted14day, crafted30day=crafted30day, craftedtotal=craftedtotal, itemTypeID=itemTypeID, itemSubTypeID=itemSubTypeID, itemName=itemName})
+					table.sort(r, function(a,b) return
+						a.itemTypeID<b.itemTypeID or
+						(a.itemTypeID==b.itemTypeID and a.itemSubTypeID<b.itemSubTypeID) or
+						(a.itemTypeID==b.itemTypeID and a.itemSubTypeID==b.itemSubTypeID and a.itemName<b.itemName) or
+						(a.itemTypeID==b.itemTypeID and a.itemSubTypeID==b.itemSubTypeID and a.itemName==b.itemName and a.ilvl<b.ilvl)
+					end)
+				else
+					table.insert(r[itemTypeID][itemSubTypeID], {itemlink=kLink, ilvl=kIlvl, used7day=used7day, used14day=used14day, used30day=used30day, usedtotal=usedtotal, crafted7day=crafted7day, crafted14day=crafted14day, crafted30day=crafted30day, craftedtotal=craftedtotal, itemTypeID=itemTypeID, itemSubTypeID=itemSubTypeID, itemName=itemName})
+				end
 			end
 		end
 	end
