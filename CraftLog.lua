@@ -3,6 +3,10 @@ local f = CraftLogFrame
 local sc = scScroll
 local GameToolTip =  _G["GameTooltip"]
 local CraftLogItemButtons = {}
+local CraftLogContainerFrames = {}
+local CraftLogSubContainerFrames = {}
+
+local showOldData = false
 
 -- settings
 local debugToggle = false
@@ -448,6 +452,11 @@ function CraftLogGetItemStats()
 	for kLink, vLink in pairs(t) do
 		for kIlvl, vIlvl in pairs(t[kLink]) do
 			local crafted7day, crafted14day, crafted30dy, craftedtotal, used7day, used14day, used30day, usedtotal
+			local itemName, _, _, _, _, _, _, _, _, _, _, itemTypeID, itemSubTypeID = GetItemInfo(kLink)
+			if not (showOldData) then 
+				if (r[itemTypeID]==nil) then r[itemTypeID] = {} end
+				if (r[itemTypeID][itemSubTypeID]==nil) then r[itemTypeID][itemSubTypeID] = {} end
+			end
 			if (t[kLink][kIlvl]["+"] == nil) then
 				crafted7day = 0
 				crafted14day = 0
@@ -470,10 +479,25 @@ function CraftLogGetItemStats()
 				if (t[kLink][kIlvl]["-"]["30day"] == nil) then used30day = 0 else used30day = t[kLink][kIlvl]["-"]["30day"] end
 				if (t[kLink][kIlvl]["-"]["total"] == nil) then usedtotal = 0 else usedtotal = t[kLink][kIlvl]["-"]["total"] end
 			end
-			table.insert(r, {itemlink=kLink, ilvl=kIlvl, used7day=used7day, used14day=used14day, used30day=used30day, usedtotal=usedtotal, crafted7day=crafted7day, crafted14day=crafted14day, crafted30day=crafted30day, craftedtotal=craftedtotal})			
+			if (showOldData) then
+				table.insert(r, {itemlink=kLink, ilvl=kIlvl, used7day=used7day, used14day=used14day, used30day=used30day, usedtotal=usedtotal, crafted7day=crafted7day, crafted14day=crafted14day, crafted30day=crafted30day, craftedtotal=craftedtotal, itemTypeID=itemTypeID, itemSubTypeID=itemSubTypeID, itemName=itemName})
+				table.sort(r, function(a,b) return
+					a.itemTypeID<b.itemTypeID or
+					(a.itemTypeID==b.itemTypeID and a.itemSubTypeID<b.itemSubTypeID) or
+					(a.itemTypeID==b.itemTypeID and a.itemSubTypeID==b.itemSubTypeID and a.itemName<b.itemName) or
+					(a.itemTypeID==b.itemTypeID and a.itemSubTypeID==b.itemSubTypeID and a.itemName==b.itemName and a.ilvl<b.ilvl)
+				end)
+			else
+				table.insert(r[itemTypeID][itemSubTypeID], {itemlink=kLink, ilvl=kIlvl, used7day=used7day, used14day=used14day, used30day=used30day, usedtotal=usedtotal, crafted7day=crafted7day, crafted14day=crafted14day, crafted30day=crafted30day, craftedtotal=craftedtotal, itemTypeID=itemTypeID, itemSubTypeID=itemSubTypeID, itemName=itemName})
+			end
 		end
 	end
-	table.sort(r, function(a,b) return a.itemlink<b.itemlink end)
+	table.sort(r, function(a,b) return
+		a.itemTypeID<b.itemTypeID or
+		(a.itemTypeID==b.itemTypeID and a.itemSubTypeID<b.itemSubTypeID) or
+		(a.itemTypeID==b.itemTypeID and a.itemSubTypeID==b.itemSubTypeID and a.itemName<b.itemName) or
+		(a.itemTypeID==b.itemTypeID and a.itemSubTypeID==b.itemSubTypeID and a.itemName==b.itemName and a.ilvl<b.ilvl)
+	end)
 	return r
 end
 
@@ -581,23 +605,23 @@ end
 function f:ShowData()
 	-- headers for Timeframes
 	local header1d = f:CreateFontString(f, "ARTWORK", "GameFontHighlight")
-	header1d:SetPoint("TOPLEFT", 350, -40)
+	header1d:SetPoint("TOPLEFT", 375, -40)
 	header1d:SetText("7 days")
 
 	local header7d = f:CreateFontString(f, "ARTWORK", "GameFontHighlight")
-	header7d:SetPoint("TOPLEFT", 450, -40)
+	header7d:SetPoint("TOPLEFT", 475, -40)
 	header7d:SetText("14 days")
 
 	local header30d = f:CreateFontString(f, "ARTWORK", "GameFontHighlight")
-	header30d:SetPoint("TOPLEFT", 550, -40)
+	header30d:SetPoint("TOPLEFT", 575, -40)
 	header30d:SetText("30 days")
 
 	local headerAll = f:CreateFontString(f, "ARTWORK", "GameFontHighlight")
-	headerAll:SetPoint("TOPLEFT", 650, -40)
+	headerAll:SetPoint("TOPLEFT", 675, -40)
 	headerAll:SetText("total")
 
 	sc:HookScript("OnEnter", function()
-		if(v.itemlink) then
+		if not (v==nil) and (v.itemlink) then
 			GameToolTip:SetOwner(sc, "ANCHOR_CURSOR")
 			GameToolTip:SetHyperlink(v.itemlink)
 			GameToolTip:Show()
@@ -607,58 +631,183 @@ function f:ShowData()
 		GameToolTip:Hide()
 	end)
 
-	--add data
+	--add data (old way)
 	--	{ itemlink=link, ilvl=ilvl, used7day=7day, used14day=14day, used30day=30day, usedtotal=total, crafted7day=7day, crafted14day=14day, crafted30day=30day, craftedtotal=total},
-	for i, v in ipairs(CraftLogGetItemStats()) do
+	if (showOldData) then
+		for i, v in ipairs(CraftLogGetItemStats()) do
 		
-		local itemButton = CraftLogItemButtons[i] or CreateFrame("Button", nil, sc)
-		CraftLogItemButtons[i] = itemButton
-		local itemText = itemButton:CreateFontString(itemButton, "ARTWORK", "GameFontHighlight")
-		itemText:SetText(v.itemlink.." ("..v.ilvl..")")
-		--itemText:SetPoint("TOPLEFT", 20, -i*50)
-		itemButton:SetPoint("TOPLEFT", 20, -i*50)
-		itemButton:SetHeight(20)
-		itemButton:SetWidth(itemText:GetStringWidth())
-		--itemButton:SetText(v.itemlink.." ("..v.ilvl..")")
-		itemButton:SetFontString(itemText)
-		itemButton:HookScript("OnEnter", function()
-		if(v.itemlink) then
-				GameToolTip:SetOwner(itemButton, "ANCHOR_CURSOR")
-				GameToolTip:SetHyperlink(v.itemlink)
-				GameToolTip:Show()
+			local itemButton = CraftLogItemButtons[i] or CreateFrame("Button", nil, sc)
+			CraftLogItemButtons[i] = itemButton
+			local itemText = itemButton:CreateFontString(itemButton, "ARTWORK", "GameFontHighlight")
+			itemText:SetText(v.itemlink.." ("..v.ilvl..")")
+			--itemText:SetPoint("TOPLEFT", 20, -i*50)
+			itemButton:SetPoint("TOPLEFT", 20, -i*50)
+			itemButton:SetHeight(20)
+			itemButton:SetWidth(itemText:GetStringWidth())
+			--itemButton:SetText(v.itemlink.." ("..v.ilvl..")")
+			itemButton:SetFontString(itemText)
+			itemButton:HookScript("OnEnter", function()
+			if(v.itemlink) then
+					GameToolTip:SetOwner(itemButton, "ANCHOR_CURSOR")
+					GameToolTip:SetHyperlink(v.itemlink)
+					GameToolTip:Show()
+				end
+			end)
+			itemButton:HookScript("OnLeave", function()
+				GameToolTip:Hide()
+			end)
+			-- 7 day timeframe
+			local used7day = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
+			used7day:SetText("- "..v.used7day)
+			used7day:SetPoint("TOPLEFT", 250-used7day:GetStringWidth(), -i*50+10)
+			local crafted7day = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
+			crafted7day:SetText("+ "..v.crafted7day)
+			crafted7day:SetPoint("TOPLEFT", 250-crafted7day:GetStringWidth(), -i*50-10)
+			-- 14 day timeframe
+			local used14day = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
+			used14day:SetText("- "..v.used14day)
+			used14day:SetPoint("TOPLEFT", 350-used14day:GetStringWidth(), -i*50+10)
+			local crafted14day = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
+			crafted14day:SetText("+ "..v.crafted14day)
+			crafted14day:SetPoint("TOPLEFT", 350-crafted14day:GetStringWidth(), -i*50-10)
+			-- 30 day timeframe
+			local used30day = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
+			used30day:SetText("- "..v.used30day)
+			used30day:SetPoint("TOPLEFT", 450-used30day:GetStringWidth(), -i*50+10)
+			local crafted30day = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
+			crafted30day:SetText("+ "..v.crafted30day)
+			crafted30day:SetPoint("TOPLEFT", 450-crafted30day:GetStringWidth(), -i*50-10)
+			-- total timeframe
+			local usedtotal = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
+			usedtotal:SetText("- "..v.usedtotal)
+			usedtotal:SetPoint("TOPLEFT", 550-usedtotal:GetStringWidth(), -i*50+10)
+			local craftedtotal = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
+			craftedtotal:SetText("+ "..v.craftedtotal)
+			craftedtotal:SetPoint("TOPLEFT", 550-craftedtotal:GetStringWidth(), -i*50-10)
+		end
+	else
+		-- create headers for itemclass
+		local i = 1
+		for kItemType, vItemType in pairs(CraftLogGetItemStats()) do
+			local headerHeight = 40
+			local itemContainer = CraftLogContainerFrames[i] or CreateFrame("Frame", "CraftLogContainer"..GetItemClassInfo(kItemType), sc)
+			CraftLogContainerFrames[i] = itemContainer
+			if (i==1) then
+				itemContainer:SetPoint("TOPLEFT", 20, -20)
+			else
+				itemContainer:SetPoint("TOPLEFT", CraftLogContainerFrames[i-1], "BOTTOMLEFT", 0, 0)
 			end
-		end)
-		itemButton:HookScript("OnLeave", function()
-			GameToolTip:Hide()
-		end)
-		-- 7 day timeframe
-		local used7day = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
-		used7day:SetText("- "..v.used7day)
-		used7day:SetPoint("TOPLEFT", 250-used7day:GetStringWidth(), -i*50+10)
-		local crafted7day = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
-		crafted7day:SetText("+ "..v.crafted7day)
-		crafted7day:SetPoint("TOPLEFT", 250-crafted7day:GetStringWidth(), -i*50-10)
-		-- 14 day timeframe
-		local used14day = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
-		used14day:SetText("- "..v.used14day)
-		used14day:SetPoint("TOPLEFT", 350-used14day:GetStringWidth(), -i*50+10)
-		local crafted14day = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
-		crafted14day:SetText("+ "..v.crafted14day)
-		crafted14day:SetPoint("TOPLEFT", 350-crafted14day:GetStringWidth(), -i*50-10)
-		-- 30 day timeframe
-		local used30day = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
-		used30day:SetText("- "..v.used30day)
-		used30day:SetPoint("TOPLEFT", 450-used30day:GetStringWidth(), -i*50+10)
-		local crafted30day = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
-		crafted30day:SetText("+ "..v.crafted30day)
-		crafted30day:SetPoint("TOPLEFT", 450-crafted30day:GetStringWidth(), -i*50-10)
-		-- total timeframe
-		local usedtotal = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
-		usedtotal:SetText("- "..v.usedtotal)
-		usedtotal:SetPoint("TOPLEFT", 550-usedtotal:GetStringWidth(), -i*50+10)
-		local craftedtotal = sc:CreateFontString(sc, "ARTWORK", "GameFontHighlightRight")
-		craftedtotal:SetText("+ "..v.craftedtotal)
-		craftedtotal:SetPoint("TOPLEFT", 550-craftedtotal:GetStringWidth(), -i*50-10)
+			itemContainer:SetPoint("RIGHT", 0, 0)
+			itemContainer:SetClipsChildren(true)
+			--itemContainer:SetWidth(200)
+			--itemContainer:SetHeight(40)
+			local headerButton = CraftLogItemButtons[i] or CreateFrame("Button", "CraftLogContainerHeaderButton"..GetItemClassInfo(kItemType), itemContainer, "UIPanelButtonTemplate")
+			CraftLogItemButtons[i] = headerButton
+			local headerButtonText = headerButton:CreateFontString(headerButton, "ARTWORK", "GameFontHighlight")
+			headerButtonText:SetText("+")
+			headerButton:SetPoint("TOPLEFT", 10, -10)
+			headerButton:SetHeight(20)
+			headerButton:SetWidth(20)
+			headerButton:SetFontString(headerButtonText)
+			local headerText = itemContainer:CreateFontString(itemContainer, "ARTWORK", "GameFontHighlight")
+			headerText:SetText(GetItemClassInfo(kItemType))
+			headerText:SetPoint("TOPLEFT", 40, -15)
+			
+			-- create headers for itemsubclass
+			local n = 1
+			for kItemSubType, vItemSubType in pairs(vItemType) do
+				local subHeaderHeight = 40
+				local itemSubContainer = CraftLogSubContainerFrames[100*i+n] or CreateFrame("Frame", "CraftLogSubContainer"..GetItemClassInfo(kItemType)..GetItemSubClassInfo(kItemType, kItemSubType), itemContainer)
+				CraftLogSubContainerFrames[100*i+n] = itemSubContainer
+				if (n==1) then
+					itemSubContainer:SetPoint("TOPLEFT", 20, -40)
+				else
+					itemSubContainer:SetPoint("TOPLEFT", CraftLogSubContainerFrames[100*i+n-1], "BOTTOMLEFT", 0, 0)
+				end
+				itemSubContainer:SetPoint("RIGHT", 0, 0)
+				--itemSubContainer:SetWidth(200)
+				--itemSubContainer:SetHeight(40)
+				local subHeaderButton = CraftLogItemButtons[i*100+n] or CreateFrame("Button", "CraftLogContainerSubHeaderButton"..GetItemClassInfo(kItemType)..GetItemSubClassInfo(kItemType, kItemSubType), itemSubContainer, "UIPanelButtonTemplate")
+				CraftLogItemButtons[100*i+n] = subHeaderButton
+				local subHeaderButtonText = subHeaderButton:CreateFontString(subHeaderButton, "ARTWORK", "GameFontHighlight")
+				subHeaderButtonText:SetText("+")
+				subHeaderButton:SetPoint("TOPLEFT", 10 , -10)
+				subHeaderButton:SetWidth(20)
+				subHeaderButton:SetHeight(20)
+				subHeaderButton:SetFontString(subHeaderButtonText)
+				local subHeaderText = itemSubContainer:CreateFontString(itemSubContainer, "ARTWORK", "GameFontHighlight")
+				subHeaderText:SetText(GetItemClassInfo(kItemType).." / "..GetItemSubClassInfo(kItemType, kItemSubType))
+				subHeaderText:SetPoint("TOPLEFT", 40, -15)
+				
+				-- create item entries
+				table.sort(vItemSubType, function(a,b) return
+					a.itemName<b.itemName or
+					(a.itemName==b.itemName and a.ilvl<b.ilvl)
+				end)
+				local m = 1
+				for k, v in ipairs(vItemSubType) do
+					local itemButton = CraftLogItemButtons[10000*i+100*n+k] or CreateFrame("Button", nil, itemSubContainer)
+					CraftLogItemButtons[10000*i+100*n+k] = itemButton
+					local itemText = itemButton:CreateFontString(itemButton, "ARTWORK", "GameFontHighlight")
+					itemText:SetText(v.itemlink.." ("..v.ilvl..")")
+					itemButton:SetPoint("TOPLEFT", 60, -k*50)
+					itemButton:SetHeight(20)
+					itemButton:SetWidth(itemText:GetStringWidth())
+					itemButton:SetFontString(itemText)
+					itemButton:HookScript("OnEnter", function()
+					if(v.itemlink) then
+							GameToolTip:SetOwner(itemButton, "ANCHOR_CURSOR")
+							GameToolTip:SetHyperlink(v.itemlink)
+							GameToolTip:Show()
+						end
+					end)
+					itemButton:HookScript("OnLeave", function()
+						GameToolTip:Hide()
+					end)
+					-- 7 day timeframe
+					local used7day = itemSubContainer:CreateFontString(itemSubContainer, "ARTWORK", "GameFontHighlightRight")
+					used7day:SetText("- "..v.used7day)
+					used7day:SetPoint("TOPLEFT", 350-used7day:GetStringWidth(), -k*50+10)
+					local crafted7day = itemSubContainer:CreateFontString(itemSubContainer, "ARTWORK", "GameFontHighlightRight")
+					crafted7day:SetText("+ "..v.crafted7day)
+					crafted7day:SetPoint("TOPLEFT", 350-crafted7day:GetStringWidth(), -k*50-10)
+					-- 14 day timeframe
+					local used14day = itemSubContainer:CreateFontString(itemSubContainer, "ARTWORK", "GameFontHighlightRight")
+					used14day:SetText("- "..v.used14day)
+					used14day:SetPoint("TOPLEFT", 450-used14day:GetStringWidth(), -k*50+10)
+					local crafted14day = itemSubContainer:CreateFontString(itemSubContainer, "ARTWORK", "GameFontHighlightRight")
+					crafted14day:SetText("+ "..v.crafted14day)
+					crafted14day:SetPoint("TOPLEFT", 450-crafted14day:GetStringWidth(), -k*50-10)
+					-- 30 day timeframe
+					local used30day = itemSubContainer:CreateFontString(itemSubContainer, "ARTWORK", "GameFontHighlightRight")
+					used30day:SetText("- "..v.used30day)
+					used30day:SetPoint("TOPLEFT", 550-used30day:GetStringWidth(), -k*50+10)
+					local crafted30day = itemSubContainer:CreateFontString(itemSubContainer, "ARTWORK", "GameFontHighlightRight")
+					crafted30day:SetText("+ "..v.crafted30day)
+					crafted30day:SetPoint("TOPLEFT", 550-crafted30day:GetStringWidth(), -k*50-10)
+					-- total timeframe
+					local usedtotal = itemSubContainer:CreateFontString(itemSubContainer, "ARTWORK", "GameFontHighlightRight")
+					usedtotal:SetText("- "..v.usedtotal)
+					usedtotal:SetPoint("TOPLEFT", 650-usedtotal:GetStringWidth(), -k*50+10)
+					local craftedtotal = itemSubContainer:CreateFontString(itemSubContainer, "ARTWORK", "GameFontHighlightRight")
+					craftedtotal:SetText("+ "..v.craftedtotal)
+					craftedtotal:SetPoint("TOPLEFT", 650-craftedtotal:GetStringWidth(), -k*50-10)
+					m = k
+					subHeaderHeight = subHeaderHeight + 50
+				end
+				itemSubContainer:SetHeight(subHeaderHeight)
+				n = n + 1
+				headerHeight = headerHeight + subHeaderHeight
+			end
+			itemContainer:SetHeight(headerHeight)
+			i = i + 1
+		end
+
+		--local btnCategoryToggle = CreateFrame("Button", nil, sc, "OptionsButtonTemplate")
+		--btnCategoryToggle:SetText("+")
+		--btnCategoryToggle:SetPoint("TOPLEFT", 20, -20)
+		--btnCategoryToggle:SetSize(20,20)
+
 	end
 	--local temptext = sc:CreateFontString(sc, "ARTWORK", "GameFontNormal")
 	--temptext:SetPoint("TOPLEFT", 20, -1000)
