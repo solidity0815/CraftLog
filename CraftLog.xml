@@ -1,4 +1,14 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
+  <Frame name="CraftLogTreeElement" virtual="true">
+    <Frames>
+      <Button name="$parentExpandCollapse" text="+">
+        <Anchors>
+          <Anchor point="LEFT"/>
+        </Anchors>
+        <Size x="20" y="20"/>
+      </Button>
+    </Frames>
+  </Frame>
   <Frame name="CraftLogFrame" inherits="BasicFrameTemplateWithInset" hidden="true" movable="true" resizable="true" enableMouse="true" clampedToScreen="true" scale="0.6">
     <Anchors>
       <Anchor point="CENTER" />
@@ -20,190 +30,17 @@
       </onDragStop>
     </Scripts>
     <Frames>
-      <CheckButton name="cbCreated" inherits="UICheckButtonTemplate">
-        <Anchors>
-          <Anchor point="TOPLEFT" x="20" y="-60"/>
-        </Anchors>
-        <Layers>
-          <Layer>
-            <FontString text="show crafted items" inherits="GameFontNormal">
-              <Anchors>
-                <Anchor point="LEFT" relativeTo="$parent" x="40" y="0"/>
-              </Anchors>
-            </FontString>
-          </Layer>
-        </Layers>
-        <Scripts>
-          <OnShow>
-            cbCreated_OnShow(self);
-          </OnShow>
-          <OnClick>
-            cbCreated_OnClick(self);
-          </OnClick>
-        </Scripts>
-      </CheckButton>
-      <CheckButton name="cbUsed" inherits="UICheckButtonTemplate">
-        <Anchors>
-          <Anchor point="TOPLEFT" x="20" y="-80"/>
-        </Anchors>
-        <Layers>
-          <Layer>
-            <FontString text="show used items" inherits="GameFontNormal">
-              <Anchors>
-                <Anchor point="LEFT" relativeTo="$parent" x="40" y="0"/>
-              </Anchors>
-            </FontString>
-          </Layer>
-        </Layers>
-        <Scripts>
-          <OnShow>
-            cbUsed_OnShow(self);
-          </OnShow>
-          <OnClick>
-            cbUsed_OnClick(self);
-          </OnClick>
-        </Scripts>
-      </CheckButton>
-      <CheckButton name="cbTimeframe1day" inherits="UICheckButtonTemplate">
-        <Anchors>
-          <Anchor point="TOPLEFT" x="20" y="-140"/>
-        </Anchors>
-        <Layers>
-          <Layer>
-            <FontString text="show 1 day timeframe" inherits="GameFontNormal">
-              <Anchors>
-                <Anchor point="LEFT" relativeTo="$parent" x="40" y="0"/>
-              </Anchors>
-            </FontString>
-          </Layer>
-        </Layers>
-        <Scripts>
-          <OnShow>
-            cbTimeframe1day_OnShow(self);
-          </OnShow>
-          <OnClick>
-            cbTimeframe1day_OnClick(self);
-          </OnClick>
-        </Scripts>
-      </CheckButton>
-      <CheckButton name="cbTimeframe7day" inherits="UICheckButtonTemplate">
-        <Anchors>
-          <Anchor point="TOPLEFT" x="20" y="-160"/>
-        </Anchors>
-        <Layers>
-          <Layer>
-            <FontString text="show 7 day timeframe" inherits="GameFontNormal">
-              <Anchors>
-                <Anchor point="LEFT" relativeTo="$parent" x="40" y="0"/>
-              </Anchors>
-            </FontString>
-          </Layer>
-        </Layers>
-        <Scripts>
-          <OnShow>
-            cbTimeframe7day_OnShow(self);
-          </OnShow>
-          <OnClick>
-            cbTimeframe7day_OnClick(self);
-          </OnClick>
-        </Scripts>
-      </CheckButton>
-      <CheckButton name="cbTimeframe30day" inherits="UICheckButtonTemplate">
-        <Anchors>
-          <Anchor point="TOPLEFT" x="20" y="-180"/>
-        </Anchors>
-        <Layers>
-          <Layer>
-            <FontString text="show 30 day timeframe" inherits="GameFontNormal">
-              <Anchors>
-                <Anchor point="LEFT" relativeTo="$parent" x="40" y="0"/>
-              </Anchors>
-            </FontString>
-          </Layer>
-        </Layers>
-        <Scripts>
-          <OnShow>
-            cbTimeframe30day_OnShow(self);
-          </OnShow>
-          <OnClick>
-            cbTimeframe30day_OnClick(self);
-          </OnClick>
-        </Scripts>
-      </CheckButton>
-      <CheckButton name="cbTimeframeTotal" inherits="UICheckButtonTemplate">
-        <Anchors>
-          <Anchor point="TOPLEFT" x="20" y="-200"/>
-        </Anchors>
-        <Layers>
-          <Layer>
-            <FontString text="show full timeframe" inherits="GameFontNormal">
-              <Anchors>
-                <Anchor point="LEFT" relativeTo="$parent" x="40" y="0"/>
-              </Anchors>
-            </FontString>
-          </Layer>
-        </Layers>
-        <Scripts>
-          <OnShow>
-            cbTimeframeTotal_OnShow(self);
-          </OnShow>
-          <OnClick>
-            cbTimeframeTotal_OnClick(self);
-          </OnClick>
-        </Scripts>
-      </CheckButton>
-      <CheckButton name="cbDebugToggle" inherits="UICheckButtonTemplate">
-        <Anchors>
-          <Anchor point="TOPLEFT" x="20" y="-260"/>
-        </Anchors>
-        <Layers>
-          <Layer>
-            <FontString text="Debug" inherits="GameFontNormal">
-              <Anchors>
-                <Anchor point="LEFT" relativeTo="$parent" x="40" y="0"/>
-              </Anchors>
-            </FontString>
-          </Layer>
-        </Layers>
-        <Scripts>
-          <OnShow>
-            cbDebugToggle_OnShow(self);
-          </OnShow>
-          <OnClick>
-            cbDebugToggle_OnClick(self);
-          </OnClick>
-        </Scripts>
-      </CheckButton>
       <ScrollFrame inherits="UIPanelScrollFrameTemplate">
         <Anchors>
-          <Anchor point="TOPLEFT" relativeTo="$parent" x="150" y="-60" />
+          <Anchor point="TOPLEFT" relativeTo="$parent" x="20" y="-60" />
           <Anchor point="BOTTOMRIGHT" relativeTo="$parent" x="-20" y="20" />
         </Anchors>
         <ScrollChild>
           <Frame name="scScroll">
-            <Size x="600" y="1"/>
+            <Size x="780" y="1"/>
           </Frame>
         </ScrollChild>
       </ScrollFrame>
     </Frames>
-    <Layers>
-      <Layer>
-        <FontString text="Filter:" inherits="GameFontHighlight">
-          <Anchors>
-            <Anchor point="TOPLEFT" relativeTo="$parent" x="20" y="-40"/>
-          </Anchors>
-        </FontString>
-        <FontString text="Timeframes:" inherits="GameFontHighlight">
-          <Anchors>
-            <Anchor point="TOPLEFT" relativeTo="$parent" x="20" y="-120"/>
-          </Anchors>
-        </FontString>
-        <FontString text="Settings:" inherits="GameFontHighlight">
-          <Anchors>
-            <Anchor point="TOPLEFT" relativeTo="$parent" x="20" y="-240"/>
-          </Anchors>
-        </FontString>
-      </Layer>
-    </Layers>
 	</Frame>
 </Ui>
