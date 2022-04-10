@@ -452,7 +452,7 @@ function CraftLogGetItemStats()
 	for kLink, vLink in pairs(t) do
 		for kIlvl, vIlvl in pairs(t[kLink]) do
 			local crafted7day, crafted14day, crafted30dy, craftedtotal, used7day, used14day, used30day, usedtotal
-			local itemName, _, _, _, _, _, _, _, _, _, _, itemTypeID, itemSubTypeID = GetItemInfo(kLink)
+			local  _, itemTypeID, itemSubTypeID = GetItemInfoInstant(kLink)
 			if (itemTypeID == nil or itemSubTypeID == nil) then
 				print(kLink.." not cached, skipping for now")
 			else
@@ -487,11 +487,11 @@ function CraftLogGetItemStats()
 					table.sort(r, function(a,b) return
 						a.itemTypeID<b.itemTypeID or
 						(a.itemTypeID==b.itemTypeID and a.itemSubTypeID<b.itemSubTypeID) or
-						(a.itemTypeID==b.itemTypeID and a.itemSubTypeID==b.itemSubTypeID and a.itemName<b.itemName) or
-						(a.itemTypeID==b.itemTypeID and a.itemSubTypeID==b.itemSubTypeID and a.itemName==b.itemName and a.ilvl<b.ilvl)
+						(a.itemTypeID==b.itemTypeID and a.itemSubTypeID==b.itemSubTypeID and a.itemlink<b.itemlink) or
+						(a.itemTypeID==b.itemTypeID and a.itemSubTypeID==b.itemSubTypeID and a.itemlink==b.itemlink and a.ilvl<b.ilvl)
 					end)
 				else
-					table.insert(r[itemTypeID][itemSubTypeID], {itemlink=kLink, ilvl=kIlvl, used7day=used7day, used14day=used14day, used30day=used30day, usedtotal=usedtotal, crafted7day=crafted7day, crafted14day=crafted14day, crafted30day=crafted30day, craftedtotal=craftedtotal, itemTypeID=itemTypeID, itemSubTypeID=itemSubTypeID, itemName=itemName})
+					table.insert(r[itemTypeID][itemSubTypeID], {itemlink=kLink, ilvl=kIlvl, used7day=used7day, used14day=used14day, used30day=used30day, usedtotal=usedtotal, crafted7day=crafted7day, crafted14day=crafted14day, crafted30day=crafted30day, craftedtotal=craftedtotal, itemTypeID=itemTypeID, itemSubTypeID=itemSubTypeID})
 				end
 			end
 		end
