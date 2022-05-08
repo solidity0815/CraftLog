@@ -5,6 +5,7 @@ local GameToolTip =  _G["GameTooltip"]
 local CraftLogItemButtons = {}
 local CraftLogContainerFrames = {}
 local CraftLogSubContainerFrames = {}
+local _, CL = ...
 
 local showOldData = false
 
@@ -254,13 +255,14 @@ function OnBagUpdateDelayed(...)
 		-- log item produced
 		if not (prospectingSpellIDs[spell] == nil) then
 			--prospecting
-			if (debugToggle) then print("using prospecing/milling logic (WIP)") end
+			if (debugToggle) then print("using prospecing/milling logic") end
 			for i = 1, C_TradeSkillUI.GetRecipeNumReagents(spell) do
 				local itemused = C_TradeSkillUI.GetRecipeReagentItemLink(spell,i)
+				local itemusedID = GetItemInfoInstant(itemused)
 				local _, _, _, ilvlused = GetItemInfo(itemused)
 				local _, _, numitemused, _ = C_TradeSkillUI.GetRecipeReagentInfo(spell,i)
 				--log used items
-				addItemToCraftLog(timestamp, spell, itemused, ilvlused, "-", numitemused)
+				CL:addItemToCraftLog(timestamp, spell, itemusedID, ilvlused, "-", numitemused)
 			end
 			
 			-- TODO: work out the prospecting results, current solution is buggy af
@@ -269,8 +271,9 @@ function OnBagUpdateDelayed(...)
 				local cur = GetItemCount(k, true, false, true)
 				local amount = cur - prospectingInventory[k]
 				local _, itemLink, _, ilvlproduced = GetItemInfo(k)
+				local itemCreatedID = GetItemInfoInstant(itemLink)
 				if (debugToggle) then print(prospectingInventory[k].." - "..cur.." = "..amount.." x "..itemLink) end
-				addItemToCraftLog(timestamp, spell, itemLink, ilvlproduced, "+", amount)
+				CL:addItemToCraftLog(timestamp, spell, itemCreatedID, ilvlproduced, "+", amount)
 			end
 		else
 			--default crafting
@@ -282,6 +285,7 @@ function OnBagUpdateDelayed(...)
 		if not (itemproduced == nil) then
 			local numitemproduced = C_TradeSkillUI.GetRecipeNumItemsProduced(spell)
 			local _, _, _, ilvlproduced = GetItemInfo(itemproduced)
+			local itemProducedID = GetItemInfoInstant(itemproduced)
 			
 			--check if optional reagents are usable
 			if not (C_TradeSkillUI.GetOptionalReagentInfo(spell)[1] == nil) then
@@ -295,9 +299,10 @@ function OnBagUpdateDelayed(...)
 					
 					--if optional reagent is still > 0 it was used -> adjust ilvlproduced accordingly
 					if (amount>0) then
-						local optionalReagent, optionalReagentIlvl
+						local optionalReagent, optionalReagentIlvl, optionalReagentID
 						--set used optional reagent
 						_, optionalReagent, _, optionalReagentIlvl = GetItemInfo(k)
+						optionalReagentID = GetItemInfoInstant(optionalReagent)
 						
 						--crafted a legendary?
 						if (ilvlproduced >= 190) then
@@ -309,7 +314,7 @@ function OnBagUpdateDelayed(...)
 						if (debugToggle) then print(optionalReagent.." used to change ilvl to "..ilvlproduced) end
 										
 						--add optional reagent to CraftLog
-						addItemToCraftLog(timestamp, spell, optionalReagent, optionalReagentIlvl, "-", amount)
+						CL:addItemToCraftLog(timestamp, spell, optionalReagentID, optionalReagentIlvl, "-", amount)
 					end
 				end
 			end
@@ -319,11 +324,12 @@ function OnBagUpdateDelayed(...)
 				local itemused = C_TradeSkillUI.GetRecipeReagentItemLink(spell,i)
 				local _, _, _, ilvlused = GetItemInfo(itemused)
 				local _, _, numitemused, _ = C_TradeSkillUI.GetRecipeReagentInfo(spell,i)
+				local itemUsedID = GetItemInfoInstant(itemused)
 				--log used items
-				addItemToCraftLog(timestamp, spell, itemused, ilvlused, "-", numitemused)
+				CL:addItemToCraftLog(timestamp, spell, itemUsedID, ilvlused, "-", numitemused)
 			end
 			--log produced item
-			addItemToCraftLog(timestamp, spell, itemproduced, ilvlproduced, "+", numitemproduced)
+			CL:addItemToCraftLog(timestamp, spell, itemProducedID, ilvlproduced, "+", numitemproduced)
 		end
 		
 		--reset delayed spell and timestamp
@@ -333,7 +339,71 @@ function OnBagUpdateDelayed(...)
 end
 
 -- clean itemlinks to remove extraeneous info like crafter's level and spec
-function GetCleanItemLink(itemLink, ilvl)
+function CL:GetCleanItemLinkFromID(itemID, ilvl)
+	local cleanLink = ""
+	local stripBonus = false
+	if (debugToggle) then print("GetCleanItemLinkFromID("..itemID..", "..ilvl..")") end
+
+	local _, newLink = GetItemInfo("item:"..itemID)
+	if (newLink == nil ) then
+		cleanLink = itemID.." @ "..ilvl
+	else
+		local splitLink = {strsplit(":", newLink)}
+		if (debugToggle) and (newLink) then print("Base Item Link: "..newLink) end
+		--if (debugToggle) then print(splitLink.toString()) end
+		splitLink[10] = ""	-- strip crafters level
+		splitLink[11] = ""  -- strip crafters spec
+		splitLink[13] = ""  -- strip item context
+	
+		-- correct bonusids if known
+		if not (bonusIDs[splitLink[2]] == nil) then
+			if (debugToggle) then
+				if (bonusIDs[splitLink[2]][ilvl][2] == nil) then
+					print("bonusIDs for itemID "..splitLink[2].." @ "..ilvl.." found: "..bonusIDs[splitLink[2]][ilvl][1])
+				else
+					print("bonusIDs for itemID "..splitLink[2].." @ "..ilvl.." found: "..bonusIDs[splitLink[2]][ilvl][1]..":"..bonusIDs[splitLink[2]][ilvl][2])
+				end
+			end
+			if (splitLink[14] == "2") then 
+				splitLink[15] = bonusIDs[splitLink[2]][ilvl][1]
+				if not (bonusIDs[splitLink[2]][ilvl][2] == nil) then
+					splitLink[16] = bonusIDs[splitLink[2]][ilvl][2]
+				else
+					splitLink[14] = 1
+				end
+			elseif (splitLink[14] == "1") then
+				if (bonusIDs[splitLink[2]][ilvl][2] == nil) then
+					splitLink[14] = 10
+					splitLink[15] = bonusIDs[splitLink[2]][ilvl][1]
+				else
+					splitLink[14] = 2
+					splitLink[15] = bonusIDs[splitLink[2]][ilvl][1]..":"..bonusIDs[splitLink[2]][ilvl][2]
+				end
+			end
+		else
+			-- item without known bonus id. create clean link and work with that
+			if (newLink) then
+				splitLink = {strsplit(":", newLink)}
+			end
+			if (debugToggle) then print("no bonusIDs for itemID "..splitLink[2].." @ "..ilvl.." found, stripping existing bonusIDs: "..splitLink[14]..":"..splitLink[15]..":"..splitLink[16]) end
+			stripBonus = true
+		end
+	
+		if (stripBonus) then
+			if (splitLink[14] == "2") then
+				table.remove(splitLink,16)
+			end
+			table.remove(splitLink,15)
+			splitLink[14] = ""
+		end
+
+		cleanLink = table.concat(splitLink,":")
+	end
+	if (debugToggle) then print("cleaned up link to: "..cleanLink) end
+	return cleanLink
+end
+
+function CL:GetCleanItemLink(itemLink, ilvl)
 	local cleanLink = ""
 	local stripBonus = false
 	local splitLink = {strsplit(":", itemLink)}
@@ -394,7 +464,7 @@ function GetCleanItemLink(itemLink, ilvl)
 end
 
 -- return distinct items from CRAFTLOG including usage/crafted amounts over various periods
-function CraftLogGetItemStats()
+function CL:CraftLogGetItemStats()
 	-- TODO: cleanup itemLinks so that crafting profession, character etc do not matter
 	local t = {}	-- temp table
 	local r = {}	-- return table
@@ -409,38 +479,41 @@ function CraftLogGetItemStats()
 		local year, month, day = kDay:match("(%d+)-(%d+)-(%d+)")
 		local age = floor((time() - time({day=day, month=month, year=year}))/86400)
 		for kCraft, vCraft in pairs(vDay) do
-			for kLink, vLink in pairs(vCraft) do
-				for kIlvl, vIlvl in pairs(vLink) do
-					local kLinkClean = GetCleanItemLink(kLink, kIlvl)
+			for kID, vID in pairs(vCraft) do
+				for kIlvl, vIlvl in pairs(vID) do
+					local kLinkClean = CL:GetCleanItemLinkFromID(kID, kIlvl)
+					local _, itemType = GetItemInfoInstant(kID)
+					local effectiveIlvl
+					if (itemType == "Tradeskill") then effectiveIlvl = 1 else effectiveIlvl=kIlvl end
 					if (t[kLinkClean] == nil) then t[kLinkClean] = {} end
-					if (t[kLinkClean][kIlvl] == nil) then t[kLinkClean][kIlvl] = {} end
+					if (t[kLinkClean][effectiveIlvl] == nil) then t[kLinkClean][effectiveIlvl] = {} end
 					for kDir, vDir in pairs(vIlvl) do
-						if (t[kLinkClean][kIlvl][kDir] == nil) then t[kLinkClean][kIlvl][kDir] = {} end
+						if (t[kLinkClean][effectiveIlvl][kDir] == nil) then t[kLinkClean][effectiveIlvl][kDir] = {} end
 						if (age<=7) then
-							if (t[kLinkClean][kIlvl][kDir]["7day"] == nil) then
-								t[kLinkClean][kIlvl][kDir]["7day"] = vDir
+							if (t[kLinkClean][effectiveIlvl][kDir]["7day"] == nil) then
+								t[kLinkClean][effectiveIlvl][kDir]["7day"] = vDir
 							else
-								t[kLinkClean][kIlvl][kDir]["7day"] = t[kLinkClean][kIlvl][kDir]["7day"] + vDir
+								t[kLinkClean][effectiveIlvl][kDir]["7day"] = t[kLinkClean][effectiveIlvl][kDir]["7day"] + vDir
 							end
 						end
 						if (age<=14) then
-							if (t[kLinkClean][kIlvl][kDir]["14day"] == nil) then
-								t[kLinkClean][kIlvl][kDir]["14day"] = vDir
+							if (t[kLinkClean][effectiveIlvl][kDir]["14day"] == nil) then
+								t[kLinkClean][effectiveIlvl][kDir]["14day"] = vDir
 							else
-								t[kLinkClean][kIlvl][kDir]["14day"] = t[kLinkClean][kIlvl][kDir]["14day"] + vDir
+								t[kLinkClean][effectiveIlvl][kDir]["14day"] = t[kLinkClean][effectiveIlvl][kDir]["14day"] + vDir
 							end
 						end
 						if (age<=30) then
-							if (t[kLinkClean][kIlvl][kDir]["30day"] == nil) then
-								t[kLinkClean][kIlvl][kDir]["30day"] = vDir
+							if (t[kLinkClean][effectiveIlvl][kDir]["30day"] == nil) then
+								t[kLinkClean][effectiveIlvl][kDir]["30day"] = vDir
 							else
-								t[kLinkClean][kIlvl][kDir]["30day"] = t[kLinkClean][kIlvl][kDir]["30day"] + vDir
+								t[kLinkClean][effectiveIlvl][kDir]["30day"] = t[kLinkClean][effectiveIlvl][kDir]["30day"] + vDir
 							end
 						end
-						if (t[kLinkClean][kIlvl][kDir]["total"] == nil) then
-							t[kLinkClean][kIlvl][kDir]["total"] = vDir
+						if (t[kLinkClean][effectiveIlvl][kDir]["total"] == nil) then
+							t[kLinkClean][effectiveIlvl][kDir]["total"] = vDir
 						else
-							t[kLinkClean][kIlvl][kDir]["total"] = t[kLinkClean][kIlvl][kDir]["total"] + vDir
+							t[kLinkClean][effectiveIlvl][kDir]["total"] = t[kLinkClean][effectiveIlvl][kDir]["total"] + vDir
 						end
 					end
 				end
@@ -506,12 +579,12 @@ function CraftLogGetItemStats()
 end
 
 -- adds item to the CraftLog table
-function addItemToCraftLog(timestamp, spell, link, ilvl, dir, amount)
+function CL:addItemToCraftLog(timestamp, spell, link, ilvl, dir, amount)
 	-- structure of CraftLog table
 	--CraftLog {
 	--	[date] = {
 	--		[craftid] = {
-	--			[itemlink] = {
+	--			[itemlink] = { -> itemID
 	--				[ilvl] = {
 	--					[-] = numused,
 	--					[+] = numproduced
@@ -540,64 +613,64 @@ function addItemToCraftLog(timestamp, spell, link, ilvl, dir, amount)
 end
 
 -- event handlers
-function cbCreated_OnShow(cb)
+function CL:cbCreated_OnShow(cb)
 	cb:SetChecked(filterCreated)
 end
 
-function cbCreated_OnClick(cb)
+function CL:cbCreated_OnClick(cb)
 	filterCreated = cb:GetChecked()
 end
 
-function cbUsed_OnShow(cb)
+function CL:cbUsed_OnShow(cb)
 	cb:SetChecked(filterUsed)
 end
 
-function cbUsed_OnClick( cb )
+function CL:cbUsed_OnClick( cb )
 	filterUsed = cb:GetChecked()
 end
 
-function cbTimeframe1day_OnShow(cb)
+function CL:cbTimeframe1day_OnShow(cb)
 	cb:SetChecked(filter1d)
 end
 
-function cbTimeframe1day_OnClick( cb )
+function CL:cbTimeframe1day_OnClick( cb )
 	filter1d = cb:GetChecked()
 end
 
-function cbTimeframe7day_OnShow(cb)
+function CL:cbTimeframe7day_OnShow(cb)
 	cb:SetChecked(filter1d)
 end
 
-function cbTimeframe7day_OnClick( cb )
+function CL:cbTimeframe7day_OnClick( cb )
 	filter1d = cb:GetChecked()
 end
 
-function cbTimeframe30day_OnShow(cb)
+function CL:cbTimeframe30day_OnShow(cb)
 	cb:SetChecked(filter1d)
 end
 
-function cbTimeframe30day_OnClick( cb )
+function CL:cbTimeframe30day_OnClick( cb )
 	filter1d = cb:GetChecked()
 end
 
-function cbTimeframeTotal_OnShow(cb)
+function CL:cbTimeframeTotal_OnShow(cb)
 	cb:SetChecked(filter1d)
 end
 
-function cbTimeframeTotal_OnClick( cb )
+function CL:cbTimeframeTotal_OnClick( cb )
 	filter1d = cb:GetChecked()
 end
 
-function cbDebugToggle_OnShow(cb)
+function CL:cbDebugToggle_OnShow(cb)
 	cb:SetChecked(debugToggle)
 end
 
-function cbDebugToggle_OnClick( cb )
+function CL:cbDebugToggle_OnClick( cb )
 	debugToggle = cb:GetChecked()
 end
 
 -- event handler ADDON_LOADED
-function InitializeSavedVariables(...)
+function CL:InitializeSavedVariables(...)
 	local arg1 = ...
 	if (arg1 == "CraftLog") then
 		if (CraftLog == nil) then
@@ -638,7 +711,7 @@ function f:ShowData()
 	--add data (old way)
 	--	{ itemlink=link, ilvl=ilvl, used7day=7day, used14day=14day, used30day=30day, usedtotal=total, crafted7day=7day, crafted14day=14day, crafted30day=30day, craftedtotal=total},
 	if (showOldData) then
-		for i, v in ipairs(CraftLogGetItemStats()) do
+		for i, v in ipairs(CL:CraftLogGetItemStats()) do
 		
 			local itemButton = CraftLogItemButtons[i] or CreateFrame("Button", nil, sc)
 			CraftLogItemButtons[i] = itemButton
@@ -692,9 +765,9 @@ function f:ShowData()
 	else
 		-- create headers for itemclass
 		local i = 1
-		for kItemType, vItemType in pairs(CraftLogGetItemStats()) do
+		for kItemType, vItemType in pairs(CL:CraftLogGetItemStats()) do
 			local headerHeight = 40
-			local itemContainer = CraftLogContainerFrames[i] or CreateFrame("Frame", "CraftLogContainer"..GetItemClassInfo(kItemType), sc)
+			local itemContainer = CraftLogContainerFrames[i] or CreateFrame("Frame", "CraftLogContainer"..kItemType, sc)
 			CraftLogContainerFrames[i] = itemContainer
 			if (i==1) then
 				itemContainer:SetPoint("TOPLEFT", 20, -20)
@@ -705,7 +778,7 @@ function f:ShowData()
 			itemContainer:SetClipsChildren(true)
 			--itemContainer:SetWidth(200)
 			--itemContainer:SetHeight(40)
-			local headerButton = CraftLogItemButtons[i] or CreateFrame("Button", "CraftLogContainerHeaderButton"..GetItemClassInfo(kItemType), itemContainer, "UIPanelButtonTemplate")
+			local headerButton = CraftLogItemButtons[i] or CreateFrame("Button", "CraftLogContainerHeaderButton"..kItemType, itemContainer, "UIPanelButtonTemplate")
 			CraftLogItemButtons[i] = headerButton
 			local headerButtonText = headerButton:CreateFontString(headerButton, "ARTWORK", "GameFontHighlight")
 			headerButtonText:SetText("+")
@@ -714,14 +787,14 @@ function f:ShowData()
 			headerButton:SetWidth(20)
 			headerButton:SetFontString(headerButtonText)
 			local headerText = itemContainer:CreateFontString(itemContainer, "ARTWORK", "GameFontHighlight")
-			headerText:SetText(GetItemClassInfo(kItemType))
+			headerText:SetText(kItemType)
 			headerText:SetPoint("TOPLEFT", 40, -15)
 			
 			-- create headers for itemsubclass
 			local n = 1
 			for kItemSubType, vItemSubType in pairs(vItemType) do
 				local subHeaderHeight = 40
-				local itemSubContainer = CraftLogSubContainerFrames[100*i+n] or CreateFrame("Frame", "CraftLogSubContainer"..GetItemClassInfo(kItemType)..GetItemSubClassInfo(kItemType, kItemSubType), itemContainer)
+				local itemSubContainer = CraftLogSubContainerFrames[100*i+n] or CreateFrame("Frame", "CraftLogSubContainer"..kItemType..kItemSubType, itemContainer)
 				CraftLogSubContainerFrames[100*i+n] = itemSubContainer
 				if (n==1) then
 					itemSubContainer:SetPoint("TOPLEFT", 20, -40)
@@ -731,7 +804,7 @@ function f:ShowData()
 				itemSubContainer:SetPoint("RIGHT", 0, 0)
 				--itemSubContainer:SetWidth(200)
 				--itemSubContainer:SetHeight(40)
-				local subHeaderButton = CraftLogItemButtons[i*100+n] or CreateFrame("Button", "CraftLogContainerSubHeaderButton"..GetItemClassInfo(kItemType)..GetItemSubClassInfo(kItemType, kItemSubType), itemSubContainer, "UIPanelButtonTemplate")
+				local subHeaderButton = CraftLogItemButtons[i*100+n] or CreateFrame("Button", "CraftLogContainerSubHeaderButton"..kItemType..kItemSubType, itemSubContainer, "UIPanelButtonTemplate")
 				CraftLogItemButtons[100*i+n] = subHeaderButton
 				local subHeaderButtonText = subHeaderButton:CreateFontString(subHeaderButton, "ARTWORK", "GameFontHighlight")
 				subHeaderButtonText:SetText("+")
@@ -740,13 +813,13 @@ function f:ShowData()
 				subHeaderButton:SetHeight(20)
 				subHeaderButton:SetFontString(subHeaderButtonText)
 				local subHeaderText = itemSubContainer:CreateFontString(itemSubContainer, "ARTWORK", "GameFontHighlight")
-				subHeaderText:SetText(GetItemClassInfo(kItemType).." / "..GetItemSubClassInfo(kItemType, kItemSubType))
+				subHeaderText:SetText(kItemType.." / "..kItemSubType)
 				subHeaderText:SetPoint("TOPLEFT", 40, -15)
 				
 				-- create item entries
 				table.sort(vItemSubType, function(a,b) return
-					a.itemName<b.itemName or
-					(a.itemName==b.itemName and a.ilvl<b.ilvl)
+					a.itemlink<b.itemlink or
+					(a.itemlink==b.itemlink and a.ilvl<b.ilvl)
 				end)
 				local m = 1
 				for k, v in ipairs(vItemSubType) do
